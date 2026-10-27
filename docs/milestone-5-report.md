@@ -1,6 +1,6 @@
 # Milestone 5 — Production readiness (v1.0.0)
 
-**Status:** complete. **Release artefact:** `release/sketchpilot-1.1.0.zip` (2.7 MB, 188 files).
+**Status:** complete. **Release artefact:** `release/sketchpilot-1.1.2.zip` (2.7 MB, 188 files).
 **Date:** 27 October 2026.
 
 Phase 5 was not about adding features — 0.4.0 already did what the specification asks for. It
@@ -14,7 +14,7 @@ and the whole thing packaged for the Web Store with documentation that matches t
 | --- | --- |
 | Lint (ESLint 9, new flat config) | clean — 0 errors, 0 warnings |
 | Type check (`tsc --noEmit`, strict) | clean |
-| Unit + component tests | **204 passed / 16 files** |
+| Unit + component tests | **208 passed / 17 files** |
 | Coverage (`src/storage`, `src/ai`, `src/export`) | **84.8 % / 90.0 % / 81.2 %** statements (thresholds 80 % enforced) |
 | Production build + release guard | `✔ build checks passed` |
 | End-to-end (packaged `dist/` in real Chromium) | **53 passed**, ~3.8 min |
@@ -144,7 +144,7 @@ Nothing in this report is an estimate. The end-to-end figure comes from a full
 ## Exit gate
 
 - [x] All 18 §14 scenarios automated and green; CI configured from a clean clone
-      (verified: `rm -rf node_modules && npm ci` then 204 unit tests + 53 e2e green).
+      (verified: `rm -rf node_modules && npm ci` then 208 unit tests + 55 e2e green).
 - [x] Accessibility and keyboard pass complete with fixes applied.
 - [x] Performance budgets met with numbers recorded.
 - [x] Security checklist signed off; permissions minimal and documented.

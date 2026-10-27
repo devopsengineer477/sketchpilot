@@ -83,18 +83,27 @@ html.popup-root #root {
 }
 
 /*
- * Two entries in the engine's "More tools" menu are removed as well:
+ * **Web Embed** is removed from the "More tools" menu: it embeds a *live remote page* inside the
+ * canvas. SketchPilot is an offline, local-first app with no host permissions; a canvas object
+ * that silently loads a third-party site would break that promise. The manifest CSP refuses
+ * frames outright (`frame-src 'none'`), so it fails closed even if some future UI tried.
  *
- * - **Mermaid to …**: a link to another product's converter, and inert here anyway (the
- *   converter is not bundled — see src/stubs/mermaid-to-excalidraw.ts).
- * - **Web Embed**: embeds a *live remote page* inside the canvas. SketchPilot is an offline,
- *   local-first app with no host permissions; a canvas object that silently loads a third-party
- *   site would break that promise, so the entry is gone and the manifest CSP now refuses frames
- *   outright (`frame-src 'none'`), making it fail closed even if some future UI tried.
+ * The menu's other removed entries — "Mermaid to …" and the "Generate / text to diagram" group —
+ * are gone at the source: `aiEnabled={false}` on the canvas takes them out of the menu, the
+ * command palette and the magic-frame action (see EditorApp).
  *
  * Frame tool and Laser pointer stay: both are local, offline and part of the drawing surface.
  */
-/* The menu renders in a portal outside the canvas host, so this selector is unscoped. */
+/* The menu renders in a portal outside the canvas host, so these selectors are unscoped. */
 [data-testid="toolbar-embeddable"] {
+  display: none !important;
+}
+
+/*
+ * The engine renders the "Generate" heading of its More-tools menu unconditionally, so once its
+ * children are gone (see the note above) the heading would sit there pointing at nothing. It is
+ * the only `font-weight: 600` div inside that dropdown.
+ */
+.dropdown-menu-container > div[style*="font-weight: 600"] {
   display: none !important;
 }

@@ -1,7 +1,7 @@
 {
   "name": "sketchpilot-ai",
   "private": true,
-  "version": "1.1.0",
+  "version": "1.1.2",
   "type": "module",
   "description": "Sketch, diagram and organise ideas on a fast, local-first canvas \u2014 an independent Chrome extension.",
   "scripts": {
@@ -19,7 +19,8 @@
     "perf": "playwright test tests/e2e/perf.spec.ts --reporter=list",
     "docs:matrix": "vite-node scripts/update-test-matrix.ts",
     "test:coverage": "vitest run --coverage",
-    "notices": "node scripts/build-notices.mjs"
+    "notices": "node scripts/build-notices.mjs",
+    "notices:lockfile": "node scripts/build-notices.mjs --from-lockfile"
   },
   "dependencies": {
     "@excalidraw/excalidraw": "^0.18.1",

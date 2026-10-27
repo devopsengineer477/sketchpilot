@@ -39,11 +39,14 @@ describe('PNG export wrapper', () => {
     const call = exportToBlob.mock.calls[0]![0] as {
       appState: Record<string, unknown>;
       mimeType: string;
-      quality: number;
+      quality?: number;
       getDimensions: (width: number, height: number) => { width: number; height: number; scale: number };
     };
     expect(call.mimeType).toBe('image/png');
-    expect(call.quality).toBe(1);
+    // Regression: PNG is lossless, so the engine ignores `quality` and logs
+    // `"quality" will be ignored for "image/png" mimeType`. Never send it.
+    expect(call.quality).toBeUndefined();
+    expect('quality' in call).toBe(false);
     expect(call.appState.exportBackground).toBe(false); // transparent
     expect(call.appState.exportWithDarkMode).toBe(true);
     expect(call.appState.viewBackgroundColor).toBe('#fafafa');

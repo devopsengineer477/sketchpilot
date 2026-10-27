@@ -84,6 +84,8 @@ export function EditorApp({
   const apiRef = useRef<ExcalidrawImperativeAPI | null>(null);
   const canvasHostRef = useRef<HTMLElement | null>(null);
   const lastSceneSignatureRef = useRef<string>('');
+  /** One toast per session, no matter how often a removed dialog is forced open. */
+  const removedDialogNotifiedRef = useRef(false);
 
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
   const [zoom, setZoom] = useState(1);
@@ -148,6 +150,18 @@ export function EditorApp({
       const base = session.getBase();
       if (!base) return;
 
+      // Guard for the engine's text-to-diagram / Mermaid dialog. `aiEnabled={false}` keeps it
+      // out of the UI; this makes it fail closed if a future engine version re-exposes it by
+      // another route (palette, shortcut, restored appState). The converter is not bundled, so
+      // the dialog could never have produced anything anyway.
+      if (appState.openDialog && appState.openDialog.name === 'ttd') {
+        apiRef.current?.updateScene({ appState: { openDialog: null } });
+        if (!removedDialogNotifiedRef.current) {
+          removedDialogNotifiedRef.current = true;
+          push('info', 'That importer is not part of SketchPilot', 'Paste diagrams with Ctrl/⌘+V, or generate one in the AI panel.');
+        }
+      }
+
       setZoom(appState.zoom.value);
       const selectedIds = Object.keys(appState.selectedElementIds ?? {});
       setSelectionSize(selectedIds.length);
@@ -196,7 +210,9 @@ export function EditorApp({
 
       session.scheduleSave(snapshotDocument(base, elements, appState, files));
     },
-    [session],
+    // `push` is a stable toast callback from useToasts; including it would not change behaviour,
+    // but the list stays explicit so a future edit cannot silently capture a stale one.
+    [session, push],
   );
 
   // Refresh the library preview after a save, off the editing path.
@@ -756,6 +772,12 @@ export function EditorApp({
             onChange={handleChange}
             UIOptions={EXCALIDRAW_UI_OPTIONS as never}
             langCode="en"
+            // Removes the engine's own AI surface entirely: the "Mermaid to …" importer, its
+            // "Text to diagram" tab, the matching command-palette entries and the magic-frame
+            // "convert to code" action. SketchPilot ships no Mermaid importer (the converter is
+            // not bundled — src/stubs/mermaid-to-excalidraw.ts) and its AI lives in our own
+            // panel, so leaving these switchable would offer a feature that cannot work.
+            aiEnabled={false}
           >
             {/* Replaces the engine's menu, which ships "Excalidraw links" — see EngineMenu. */}
             <EngineMenu onShowShortcuts={() => setShortcutsOpen(true)} />

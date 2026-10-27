@@ -104,6 +104,32 @@ test('8. PNG export produces a real image file', async () => {
   await expect(page.getByText('PNG exported')).toBeVisible();
 });
 
+test('8d. exporting a PNG logs no engine warnings about ignored options', async () => {
+  await app.page.goto(surfaceUrl(app.extensionId, 'dashboard'));
+  const { page } = await openNewDrawingFromDashboard(app.page, app.context);
+  await drawRectangle(page);
+  await waitForSaved(page);
+
+  // Collect everything the page logs, starting before the export and staying through the
+  // idle-scheduled thumbnail render, which uses the same rasteriser.
+  const messages: string[] = [];
+  page.on('console', (message) => messages.push(message.text()));
+  page.on('pageerror', (error) => messages.push(error.message));
+
+  await page.getByRole('button', { name: /Export/ }).click();
+  const downloadPromise = page.waitForEvent('download', { timeout: 45_000 });
+  await page.getByRole('menuitem', { name: /PNG image/ }).click();
+  await downloadPromise;
+  await expect(page.getByText('PNG exported')).toBeVisible();
+
+  // Give the throttled thumbnail job (idle callback, 4 s fallback) time to run as well.
+  await page.waitForTimeout(5_000);
+
+  // Regression: passing `quality` with a PNG mimeType made the engine log
+  // `"quality" will be ignored for "image/png" mimeType`.
+  expect(messages.filter((text) => /will be ignored/i.test(text))).toEqual([]);
+});
+
 test('8b. SVG export produces sanitised vector output', async () => {
   await app.page.goto(surfaceUrl(app.extensionId, 'dashboard'));
   const { page } = await openNewDrawingFromDashboard(app.page, app.context);

@@ -24,7 +24,7 @@ generated, shipped, and verified — see below — while every visible reference
 | Engine menu group "Excalidraw links" (GitHub, X, Discord, excalidraw.com) | Third-party links in our product | The menu is rebuilt in `src/editor/EngineMenu.tsx`: canvas background, clear canvas, Keyboard shortcuts |
 | Engine Help dialog (docs, blog, issue tracker, YouTube) | It was *only* links to another product | `?` opens SketchPilot's own shortcut sheet, also reachable from the canvas menu |
 | Library panel "Browse libraries" button | Opened a third-party site with a referrer token containing the extension ID — a privacy leak as well as branding | The library is the dashboard; `.excalidrawlib` imports still work by drag-and-drop |
-| "Mermaid to …" menu entry | Another product's converter, and inert here (the converter is not bundled) | Deliberately absent — Mermaid import is not claimed anywhere |
+| **"Mermaid to …"** importer, its "Text to diagram" tab, palette commands and magic-frame action | Another product's converter, and not bundled — it could never have worked. Now removed at the source (`aiEnabled={false}`), not merely hidden | Deliberately absent — Mermaid import is not claimed anywhere. The *opposite* direction (a drawing → Mermaid **text**) is our own AI-panel feature and stays |
 | **Web Embed** | Would load a live third-party page into the canvas — contradicts an offline, permission-minimal extension | Absent, and `frame-src 'none'` in the CSP makes it impossible even from future UI |
 | Frame tool, Laser pointer | — | **Kept.** Both are local, offline and part of the drawing surface |
 

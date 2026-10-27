@@ -167,3 +167,53 @@ test('the manifest and store metadata describe one product, our own', async () =
   expect(JSON.stringify(manifest)).not.toMatch(BRAND);
   expect(manifest.description).not.toMatch(BRAND);
 });
+
+test('the Mermaid importer is not part of the product', async () => {
+  /**
+   * The canvas engine ships a "Mermaid to …" importer (and a "Text to diagram" tab beside it).
+   * SketchPilot does not: the converter is not bundled (src/stubs/mermaid-to-excalidraw.ts), so the
+   * feature is switched off at the source with `aiEnabled={false}`. This test proves there is no
+   * route left to it — menu, command palette, or a shortcut.
+   */
+  await app.page.goto(surfaceUrl(app.extensionId, 'dashboard'));
+  const { page } = await openNewDrawingFromDashboard(app.page, app.context);
+  await page.locator('.excalidraw').waitFor();
+  await page.waitForTimeout(1200);
+
+  // 1. The canvas menu.
+  await page.locator('.excalidraw [data-testid="dropdown-menu-button"]').first().click();
+  await page.waitForTimeout(500);
+  const menu = page.locator('.excalidraw .dropdown-menu').first();
+  const menuText = await menu.innerText();
+  expect(menuText).not.toMatch(/mermaid/i);
+  expect(menuText).not.toMatch(/text to diagram/i);
+  await expect(menu).toContainText(/frame tool/i);
+  await page.keyboard.press('Escape');
+
+  // The menu keeps its two local tools; the hidden entries are not focusable either.
+  await page.locator('.excalidraw [data-testid="dropdown-menu-button"]').first().click();
+  await page.waitForTimeout(400);
+  const items = page.locator('.excalidraw .dropdown-menu .dropdown-menu-item:visible');
+  expect(await items.count()).toBe(2);
+  expect((await items.allInnerTexts()).join(' ')).toMatch(/frame tool/i);
+  expect((await items.allInnerTexts()).join(' ')).toMatch(/laser pointer/i);
+  // Tabbing through the open menu must never reach a removed entry.
+  for (let index = 0; index < 6; index += 1) {
+    await page.keyboard.press('Tab');
+    const focused = await page.evaluate(() => document.activeElement?.getAttribute('data-testid') ?? '');
+    expect(focused).not.toBe('toolbar-embeddable');
+  }
+
+  // 3. No visible control anywhere in the editor offers it, and no dialog by that name exists.
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(200);
+  const body = (await page.locator('body').innerText()).toLowerCase();
+  expect(body).not.toContain('mermaid');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+
+  // 4. The converter itself is not in the package: the stub is what is bundled.
+  const anyLargeMermaidChunk = await page.evaluate(() =>
+    [...document.querySelectorAll('script[src]')].some((script) => /mermaid/i.test(script.getAttribute('src') ?? '')),
+  );
+  expect(anyLargeMermaidChunk).toBe(false);
+});

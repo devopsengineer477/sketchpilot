@@ -1,6 +1,6 @@
 # Chrome Web Store submission checklist
 
-Status of `release/sketchpilot-1.1.0.zip` against what the Web Store actually checks, and the
+Status of `release/sketchpilot-1.1.2.zip` against what the Web Store actually checks, and the
 short list of things only the account owner can do.
 
 ---
@@ -30,11 +30,20 @@ Checked against the built artefact, not the source tree.
 | **Permissions minimal** | ✅ `storage`, `activeTab`, `scripting`, `contextMenus`, `clipboardWrite` — no host permissions, no content scripts, no `tabs`, no `debugger` |
 | **Permission justifications written** | ✅ `docs/security-review.md` §3 (paste into the console; also summarised in `docs/store-listing.md`) |
 | **Zero network on cold start** | ✅ automated test: 0 external requests on every surface |
+| **No unreachable features offered** | ✅ the engine's Mermaid importer / text-to-diagram tab / palette commands are removed at the source, not merely hidden |
 | **No third-party branding / affiliation** | ✅ no other product's name or links in the UI; non-affiliation stated in Settings → About, the listing and the privacy policy |
 | **Licences honoured** | ✅ `THIRD-PARTY-NOTICES.txt` (252 packages) + `LICENSE.txt` ship in the package |
 | **Privacy policy** | ✅ written (`PRIVACY.md`) — **still needs a public URL, see §4** |
 | **Data-use disclosures** | ✅ answers prepared in `docs/store-listing.md` |
 | **Screenshots** | ✅ 5 × 1280×800 + 440×280 promo tile, generated from the real build |
+
+### Console hygiene
+
+The extension's own console output has been audited message by message. As of **1.1.2** the PNG
+export and the library-thumbnail renderer send no `quality` value, so the engine's
+`"quality" will be ignored for "image/png" mimeType` warning no longer appears; end-to-end test
+*8d* in `tests/e2e/extension.spec.ts` fails if it ever comes back. The only line a reviewer may
+still see is the CSP-blocked `new Function` font-subset chunk, which is disclosed above.
 
 ### The one thing to disclose to reviewers
 
@@ -83,7 +92,7 @@ These cannot be prepared from inside the repository.
 4. **Confirm the name** is free in the store and not trademarked.
 5. **Listing details** — category (Productivity), language, support/contact email, and the
    data-use questionnaire (answers are pre-written in `docs/store-listing.md`).
-6. **Upload** `release/sketchpilot-1.1.0.zip` in *Package → Upload new package*, fill the listing,
+6. **Upload** `release/sketchpilot-1.1.2.zip` in *Package → Upload new package*, fill the listing,
    paste the reviewer notes, submit.
 7. Expect **a few days** for a first review (longer if they ask about the AI/capture surface);
    updates are usually faster.

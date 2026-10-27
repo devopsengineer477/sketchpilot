@@ -16,13 +16,133 @@ import { execFileSync } from 'node:child_process';
 
 const root = process.cwd();
 
+const LS_ARGS = ['ls', '--omit=dev', '--all', '--json'];
+
+/**
+ * Runs one command and returns its stdout, or `null` when the executable could not be started at
+ * all (as opposed to it running and failing, which is a real error we want to surface).
+ */
+function tryRun(file, args) {
+  try {
+    return execFileSync(file, args, {
+      cwd: root,
+      encoding: 'utf8',
+      maxBuffer: 64 * 1024 * 1024,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+  } catch (error) {
+    const code = error?.code;
+    if (code === 'ENOENT' || code === 'EINVAL' || code === 'EACCES') return null;
+    throw error;
+  }
+}
+
+/**
+ * `npm ls --json`, on every platform.
+ *
+ * On Windows `npm` is a `npm.cmd` shim, and `execFileSync("npm", …)` fails with
+ * `spawnSync npm ENOENT` (Node does not apply PATHEXT to a bare file name, and modern Node
+ * refuses to spawn `.cmd`/`.bat` without a shell). Rather than passing `shell: true` — which
+ * re-quotes our arguments through cmd.exe — we run npm's own JavaScript entry point with the
+ * Node binary already running this script. That path is exposed by npm itself as `npm_execpath`
+ * whenever this script is launched through `npm run`, which is how the build calls it.
+ */
+function npmTree() {
+  // `--from-lockfile` exercises the fallback deliberately (npm run notices:lockfile); the env
+  // var is kept for the same purpose in environments that cannot pass arguments.
+  if (process.argv.includes('--from-lockfile') || process.env.SKETCHPILOT_NOTICES_SKIP_NPM === '1') {
+    return null;
+  }
+
+  const cliPath = process.env.npm_execpath;
+  if (cliPath && /\.[cm]?js$/i.test(cliPath) && existsSync(cliPath)) {
+    const output = tryRun(process.execPath, [cliPath, ...LS_ARGS]);
+    if (output !== null) return output;
+  }
+
+  // Outside `npm run` (or with a non-JS npm shim) fall back to the platform's launcher name.
+  const output = tryRun(process.platform === 'win32' ? 'npm.cmd' : 'npm', LS_ARGS);
+  return output;
+}
+
+/** The `node_modules/...` key of a lockfile entry, reduced to the bare package name. */
+function lockName(key) {
+  const index = key.lastIndexOf('node_modules/');
+  if (index === -1) return null;
+  return key.slice(index + 'node_modules/'.length);
+}
+
+/**
+ * Fallback tree, read straight from `package-lock.json`.
+ *
+ * This exists so the build can never be blocked by a missing or unusual npm launcher: the notices
+ * file is a licence obligation, and failing to *regenerate* it must not look like failing to
+ * *ship* it. It walks the lockfile the way the installer does — starting at the root's production
+ * dependencies and following `dependencies`, `optionalDependencies` and installed
+ * `peerDependencies` — so it reaches the same set of packages as `npm ls --omit=dev`, including
+ * peers that npm installs for production packages but marks `dev` in the lockfile because the root
+ * also lists them as dev dependencies (react's type packages, for instance).
+ */
+function lockfileTree() {
+  const lockPath = join(root, 'package-lock.json');
+  if (!existsSync(lockPath)) {
+    throw new Error(
+      'Cannot read the production dependency tree: `npm` could not be started and there is no package-lock.json to fall back to.',
+    );
+  }
+  const entries = new Map(Object.entries(JSON.parse(readFileSync(lockPath, 'utf8')).packages ?? {}));
+  const rootEntry = entries.get('') ?? {};
+
+  /** Node resolution: nearest `node_modules/<name>` walking up from `fromKey`. */
+  const resolveFrom = (fromKey, name) => {
+    let base = fromKey;
+    for (;;) {
+      const candidate = `${base ? `${base}/` : ''}node_modules/${name}`;
+      if (entries.has(candidate)) return candidate;
+      const cut = base.lastIndexOf('/node_modules/');
+      if (cut === -1) {
+        const top = `node_modules/${name}`;
+        return entries.has(top) ? top : null;
+      }
+      base = base.slice(0, cut);
+    }
+  };
+
+  const found = new Map();
+  const queue = Object.keys({ ...rootEntry.dependencies, ...rootEntry.optionalDependencies }).map((name) => ({
+    fromKey: '',
+    name,
+  }));
+  const visited = new Set();
+
+  while (queue.length > 0) {
+    const { fromKey, name } = queue.shift();
+    const key = resolveFrom(fromKey, name);
+    if (!key || visited.has(key)) continue;
+    visited.add(key);
+
+    const entry = entries.get(key);
+    if (entry.link || entry.inBundle) continue;
+    const packageName = lockName(key);
+    const dedupe = `${packageName}@${entry.version ?? 'unknown'}`;
+    if (!found.has(dedupe)) found.set(dedupe, { name: packageName, version: entry.version });
+
+    const next = { ...entry.dependencies, ...entry.optionalDependencies, ...entry.peerDependencies };
+    for (const dependency of Object.keys(next)) queue.push({ fromKey: key, name: dependency });
+  }
+
+  return [...found.values()].sort(
+    (left, right) => left.name.localeCompare(right.name) || String(left.version).localeCompare(String(right.version)),
+  );
+}
+
 function productionTree() {
-  const json = execFileSync('npm', ['ls', '--omit=dev', '--all', '--json'], {
-    cwd: root,
-    encoding: 'utf8',
-    maxBuffer: 64 * 1024 * 1024,
-  });
-  const parsed = JSON.parse(json);
+  const output = npmTree();
+  if (output === null) {
+    process.stderr.write('build-notices: `npm` could not be started; reading package-lock.json instead.\n');
+    return lockfileTree();
+  }
+  const parsed = JSON.parse(output);
   const found = new Map();
 
   const walk = (node) => {
@@ -33,7 +153,9 @@ function productionTree() {
     }
   };
   walk(parsed);
-  return [...found.values()].sort((left, right) => left.name.localeCompare(right.name));
+  return [...found.values()].sort(
+    (left, right) => left.name.localeCompare(right.name) || String(left.version).localeCompare(String(right.version)),
+  );
 }
 
 /** Reads a package's licence field plus the first copyright lines from its LICENSE file. */

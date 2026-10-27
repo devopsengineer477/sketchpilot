@@ -22,7 +22,7 @@ describes a feature that is not in the shipped build; the wording was checked ag
 | Language | English |
 | Version | 1.0.0 |
 | Manifest | V3, minimum Chrome 110 |
-| Package | `release/sketchpilot-1.1.0.zip` |
+| Package | `release/sketchpilot-1.1.2.zip` |
 | Privacy policy URL | host `PRIVACY.md` (GitHub blob or Pages URL) |
 | Homepage / support URL | repository README / issues |
 

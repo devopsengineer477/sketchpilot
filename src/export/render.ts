@@ -3,6 +3,7 @@ import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types';
 import type { BinaryFiles } from '@excalidraw/excalidraw/types';
 import type { PersistedAppState } from '../storage/schemas';
 import { sanitizeSvg } from './io';
+import { qualityOption } from './quality';
 
 export type RenderOptions = {
   transparent?: boolean;
@@ -20,6 +21,7 @@ export async function renderPng(
   options: RenderOptions = {},
 ): Promise<Blob> {
   if (elements.length === 0) throw new Error('There is nothing on the canvas to export yet.');
+  const mimeType = 'image/png';
   const blob = await exportToBlob({
     elements: elements as never,
     appState: {
@@ -29,8 +31,9 @@ export async function renderPng(
       viewBackgroundColor: (appState.viewBackgroundColor as string) ?? '#ffffff',
     } as never,
     files: files as never,
-    mimeType: 'image/png',
-    quality: 1,
+    mimeType,
+    // PNG is lossless: a quality value is ignored and the engine warns about it in the console.
+    ...qualityOption(mimeType, 1),
     getDimensions: (width: number, height: number) => {
       // The caller cannot ask for a blurrier-than-1× export…
       const requested = Math.max(1, options.scale ?? (width * height > MAX_EXPORT_PIXELS ? 1 : 2));

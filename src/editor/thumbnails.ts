@@ -1,6 +1,7 @@
 import { exportToBlob } from '@excalidraw/excalidraw';
 import type { DrawingDocument, DrawingThumbnail } from '../storage/schemas';
 import { repository } from '../storage/repository';
+import { qualityOption } from '../export/quality';
 
 /**
  * Library thumbnails.
@@ -16,6 +17,8 @@ const MIN_INTERVAL_MS = 8_000;
 export async function generateThumbnail(document: DrawingDocument): Promise<DrawingThumbnail | null> {
   if (document.elements.length === 0) return null;
 
+  const mimeType = 'image/png';
+
   try {
     const blob = await exportToBlob({
       elements: document.elements as never,
@@ -25,8 +28,9 @@ export async function generateThumbnail(document: DrawingDocument): Promise<Draw
         exportWithDarkMode: false,
       } as never,
       files: (document.files ?? {}) as never,
-      mimeType: 'image/png',
-      quality: 0.85,
+      mimeType,
+      // Lossless: the engine ignores (and warns about) a quality value for PNG.
+      ...qualityOption(mimeType, 0.85),
       getDimensions: (width: number, height: number) => {
         const safeWidth = Math.max(1, width);
         const safeHeight = Math.max(1, height);

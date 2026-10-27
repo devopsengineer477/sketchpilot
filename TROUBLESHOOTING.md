@@ -12,6 +12,14 @@ decision, not a flag.
 The manifest and `PERMISSIONS.md` disagree. That check exists so permissions can never
 widen silently. Update both in the same commit if the change is intended.
 
+**`npm run build` stops with `Error: spawnSync npm ENOENT` (Windows)**
+Fixed in 1.1.2. On Windows `npm` is a `npm.cmd` shim, which `execFileSync("npm", …)` cannot start —
+Node does not apply `PATHEXT` to a bare file name and refuses to spawn `.cmd` without a shell.
+`scripts/build-notices.mjs` now runs npm's own JavaScript entry point with the Node binary already
+executing it (`process.env.npm_execpath`), falls back to `npm.cmd`, and as a last resort derives the
+same tree from `package-lock.json`, so the notices file can always be regenerated. Verify both
+routes produce byte-identical output with `npm run notices` and `npm run notices:lockfile`.
+
 **Build fails with "new Function() found in …"**
 The allowlist only covers the engine's `subset-shared.chunk` / `subset-worker.chunk`
 (its Emscripten wasm glue). If a new file appears, treat it as a real finding: find the
@@ -205,9 +213,9 @@ as a *large* jump — a doubled bundle, or an editor that takes seconds to becom
 check that both Playwright steps use the same browser install (`--with-deps chromium`).
 
 **I need the release ZIP.** Run `npm run build`, then zip the *contents* of `dist/`:
-`cd dist && zip -qr ../release/sketchpilot-1.1.0.zip .` (bash), `Compress-Archive -Path dist\*
--DestinationPath release\sketchpilot-1.1.0.zip -Force` (PowerShell), or
-`tar -a -c -f release\sketchpilot-1.1.0.zip -C dist *` (cmd). `manifest.json` must be at the ZIP
+`cd dist && zip -qr ../release/sketchpilot-1.1.2.zip .` (bash), `Compress-Archive -Path dist\*
+-DestinationPath release\sketchpilot-1.1.2.zip -Force` (PowerShell), or
+`tar -a -c -f release\sketchpilot-1.1.2.zip -C dist *` (cmd). `manifest.json` must be at the ZIP
 root.
 The version in `package.json`, `public/manifest.json` and `src/storage/schemas.ts` must agree, or
 the guard fails the build — that is deliberate, so a release can never be mislabelled.

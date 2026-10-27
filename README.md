@@ -171,17 +171,17 @@ Build a store/release ZIP (pick the one for your shell):
 
 ```bash
 # bash / zsh
-cd dist && zip -qr ../release/sketchpilot-1.1.0.zip . && cd ..
+cd dist && zip -qr ../release/sketchpilot-1.1.2.zip . && cd ..
 ```
 
 ```powershell
 # PowerShell
-Compress-Archive -Path dist\* -DestinationPath release\sketchpilot-1.1.0.zip -Force
+Compress-Archive -Path dist\* -DestinationPath release\sketchpilot-1.1.2.zip -Force
 ```
 
 ```bat
 :: cmd.exe (Windows 10+ ships tar)
-tar -a -c -f release\sketchpilot-1.1.0.zip -C dist *
+tar -a -c -f release\sketchpilot-1.1.2.zip -C dist *
 ```
 
 Or simply right-click `dist/` → *Send to* → *Compressed (zipped) folder*, then rename it:
@@ -301,7 +301,8 @@ that the drawing engine ships by default and that had no business in this app:
 | The **"Excalidraw links"** menu group (GitHub, X, Discord, excalidraw.com) | Not our links. The canvas menu is now SketchPilot's own: canvas background, clear canvas, keyboard shortcuts. |
 | The engine's **Help** dialog | It was four external links (docs, blog, issue tracker, YouTube). `?` opens SketchPilot's own shortcut sheet instead. |
 | The library panel's **"Browse libraries"** button | Opened a third-party site *with a referrer token containing the extension ID*. The library you have is the dashboard. |
-| **Web Embed** (and the inert "Mermaid to …" item) in *More tools* | Web Embed loads a live remote page inside the canvas — incompatible with an offline, permission-minimal extension. The manifest CSP now refuses frames outright (`frame-src 'none'`), so it fails closed even if some future UI tried. Frame tool and Laser pointer stay. |
+| **Web Embed** in *More tools* | Loads a live remote page inside the canvas — incompatible with an offline, permission-minimal extension. The manifest CSP now refuses frames outright (`frame-src 'none'`), so it fails closed even if some future UI tried. |
+| **Mermaid to …** importer, its "Text to diagram" tab, palette commands and the magic-frame action | Another product's converter, and not bundled — so it could never have worked. Switched off at the source (`aiEnabled={false}`). *More tools* now reads exactly **Frame tool · Laser pointer**. |
 
 `tests/e2e/brand.spec.ts` walks every surface, toolbar tooltip, panel and dialog and fails the
 suite if any other product's name becomes visible again.
@@ -369,7 +370,7 @@ do, in full:
   group, its Help dialog (docs/blog/GitHub/YouTube) and the library panel's "Browse
   libraries" button are removed, because none of them are part of this product. Shortcuts are
   documented in SketchPilot's own `?` sheet, reachable from the canvas menu.
-- Mermaid import is **not bundled** (`src/stubs/mermaid-to-excalidraw.ts`). It would add
+- Mermaid import is **not part of the product** (`src/stubs/mermaid-to-excalidraw.ts`). It would add
   ~4 MB of unused graph-rendering code to an offline extension; the engine's Mermaid
   dialog is therefore inert. Delete the stub and its Vite alias to enable it.
 

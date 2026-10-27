@@ -3,6 +3,62 @@
 All notable changes to SketchPilot AI. Versions follow semantic versioning; every release is
 an installable, loadable extension (no partial builds).
 
+## 1.1.2 — a warning-free console
+
+**Fixed**
+- Exporting a PNG (and generating a library thumbnail) passed a `quality` value alongside
+  `mimeType: "image/png"`. PNG is lossless, so the canvas engine ignored it and logged
+  `"quality" will be ignored for "image/png" mimeType` in the extension's own console — visible
+  to anyone with DevTools open, and easy to mistake for a defect in a store review. The option is
+  no longer sent for any lossless format.
+- `src/export/quality.ts` now holds the single rule: a `quality` value is only attached for lossy
+  mime types (`jpeg`, `webp`, `avif`). SketchPilot only exports PNG and SVG today, so nothing is
+  attached anywhere — but if a lossy format is ever offered, it cannot reintroduce the warning.
+- New unit tests (`src/tests/export-quality.test.ts`, 4 cases) pin the rule, and
+  `src/tests/export-render.test.ts` now asserts `quality` is **absent** from the export call
+  rather than present.
+- New end-to-end test (`extension.spec.ts` → *8d*): exports a real PNG while capturing every
+  console message and page error, waits for the throttled thumbnail render, and fails if anything
+  logs "will be ignored".
+
+**Fixed (build, Windows)**
+- `npm run build` could stop with `Error: spawnSync npm ENOENT` while generating
+  `THIRD-PARTY-NOTICES.txt`: `scripts/build-notices.mjs` called `execFileSync('npm', …)`, and on
+  Windows `npm` is an `npm.cmd` shim that Node will not spawn from a bare name (it does not apply
+  `PATHEXT`, and refuses `.cmd` without a shell). The script now runs npm's own JS entry point with
+  the running Node binary via `process.env.npm_execpath`, falls back to `npm.cmd`, and as a final
+  fallback derives the production tree from `package-lock.json` (a resolver that follows
+  dependencies, optional dependencies and installed peer dependencies, so it reaches the same
+  packages as `npm ls --omit=dev`). All three routes were verified to produce **byte-identical**
+  output (252 packages) — no `shell: true`, no cmd.exe quoting, nothing to break on either OS.
+- `npm run notices:lockfile` exercises the lockfile route deliberately, so the fallback is
+  testable on any platform.
+
+**Unchanged** — the exported PNG bytes and library thumbnails are identical: the value was
+discarded by the engine before this release too. No manifest, permission or CSP change.
+
+## 1.1.1 — the Mermaid importer is removed at the source
+
+**Fixed**
+- The engine's **"Mermaid to …"** entry was hidden with CSS only; it is now switched off at the
+  source with `aiEnabled={false}` on the canvas, which also removes its **"Text to diagram"** tab
+  beside it, the matching command-palette commands and the magic-frame "convert to code" action.
+  The entry carries a shared `data-testid` with **Web Embed**, so hiding it by CSS was one DOM
+  change away from also hiding (or re-exposing) the wrong item.
+- The "Generate" heading that the engine renders above those entries is gone too, so the *More
+  tools* menu now reads exactly: **Frame tool · Laser pointer**.
+- A defensive guard in the editor closes that dialog and explains it if a future engine version
+  ever re-exposes it by another route (palette, shortcut, restored state). The converter is not
+  bundled, so it could never have produced a diagram.
+- `src/stubs/mermaid-to-excalidraw.ts` now documents the feature as *removed*, not dormant.
+- New end-to-end test: the menu contains no Mermaid or "text to diagram" text, its two remaining
+  items are the only visible ones, tabbing through it can never reach a removed entry, and no
+  visible control anywhere in the editor offers the importer.
+
+**Unchanged** — no behavioural change to drawing, captures, AI or storage. The AI panel's
+*Convert to Mermaid* (producing plain Mermaid **text** from a drawing, the opposite direction,
+with no renderer) is SketchPilot's own feature and stays.
+
 ## 1.1.0 — an independent product, end to end
 
 SketchPilot AI is now presented as a product of its own from the toolbar to the shipped
