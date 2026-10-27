@@ -1,0 +1,10 @@
+node_modules/
+test-results/
+playwright-report/
+blob-report/
+.vite/
+*.log
+.DS_Store
+pw-debug*.mjs
+pw-smoke.mjs
+coverage/

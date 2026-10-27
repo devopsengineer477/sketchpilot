@@ -1,0 +1,70 @@
+{
+  "manifest_version": 3,
+  "name": "SketchPilot AI",
+  "version": "1.0.1",
+  "description": "Sketch and diagram on a fast canvas. Capture pages and text, use templates or AI, and keep everything local, offline and private.",
+  "minimum_chrome_version": "110",
+  "action": {
+    "default_title": "SketchPilot AI",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "contextMenus",
+    "clipboardWrite"
+  ],
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+K",
+        "mac": "Command+Shift+K"
+      },
+      "description": "Open the SketchPilot popup"
+    },
+    "new-drawing": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+7",
+        "mac": "Command+Shift+7"
+      },
+      "description": "New SketchPilot drawing"
+    },
+    "open-dashboard": {
+      "description": "Open the SketchPilot library"
+    },
+    "capture-tab": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+9",
+        "mac": "Command+Shift+9"
+      },
+      "description": "Capture the visible tab into a drawing"
+    },
+    "capture-selection": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+8",
+        "mac": "Command+Shift+8"
+      },
+      "description": "Create a sticky note from the selected text"
+    }
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'none'"
+  }
+}

@@ -1,0 +1,14 @@
+/**
+ * Excalidraw resolves fonts from `window.EXCALIDRAW_ASSET_PATH` and falls back to a
+ * public CDN when it is unset. In an MV3 extension that fallback is a CSP violation,
+ * a privacy leak, and an offline-mode failure — so we always point it at the
+ * extension-local copy produced by the build (`dist/excalidraw-assets/`).
+ */
+export function configureExcalidrawAssets(): void {
+  const extensionRoot =
+    typeof chrome !== 'undefined' && chrome.runtime?.getURL
+      ? chrome.runtime.getURL('')
+      : `${window.location.origin}/`;
+  const base = `${extensionRoot.replace(/\/$/, '')}/excalidraw-assets/`;
+  (window as unknown as { EXCALIDRAW_ASSET_PATH?: string }).EXCALIDRAW_ASSET_PATH = base;
+}

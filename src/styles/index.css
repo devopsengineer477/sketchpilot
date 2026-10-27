@@ -1,0 +1,100 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+  :root.dark {
+    color-scheme: dark;
+  }
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    @apply bg-ink-50 text-ink-900 antialiased;
+    font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  }
+  .dark body {
+    @apply bg-ink-950 text-ink-100;
+  }
+  /* Visible focus for keyboard users everywhere, including custom panels. */
+  :focus-visible {
+    @apply outline-none ring-2 ring-pilot-500 ring-offset-2 ring-offset-white;
+  }
+  .dark :focus-visible {
+    @apply ring-offset-ink-900;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+}
+
+@layer components {
+  .surface {
+    @apply rounded-xl border border-ink-200 bg-white shadow-panel dark:border-ink-800 dark:bg-ink-900;
+  }
+  .muted {
+    @apply text-ink-500 dark:text-ink-400;
+  }
+}
+
+/* Popup is a fixed-size surface in Chrome; the editor and dashboard fill their tab. */
+html.popup-root,
+html.popup-root body,
+html.popup-root #root {
+  width: 340px;
+  height: auto;
+  min-height: 420px;
+}
+
+/* Excalidraw renders its own chrome; we keep the canvas edge-to-edge. */
+.excalidraw-host .excalidraw {
+  --default-bg-color: transparent;
+}
+.excalidraw-host .excalidraw .App-bottom-bar {
+  @apply shadow-none;
+}
+
+/*
+ * No links to somebody else's product.
+ *
+ * The engine ships a help dialog made almost entirely of outbound links (its docs, blog,
+ * GitHub issues and YouTube), and the library panel offers a "Browse libraries" button that
+ * opens libraries.excalidraw.com — with a referrer token for our extension ID appended. None
+ * of that is part of SketchPilot: users should not be handed off to a third-party site from
+ * inside an offline extension. The shortcuts the help dialog documents are in SketchPilot's
+ * own `?` sheet (also reachable from the canvas menu), and the library we ship is our own
+ * dashboard.
+ *
+ * `tests/e2e/milestone5.spec.ts` asserts that no anchor in any surface points off-extension.
+ */
+.excalidraw-host .excalidraw .help-icon,
+.excalidraw-host .excalidraw .library-menu-browse-button {
+  display: none !important;
+}
+
+/*
+ * Two entries in the engine's "More tools" menu are removed as well:
+ *
+ * - **Mermaid to …**: a link to another product's converter, and inert here anyway (the
+ *   converter is not bundled — see src/stubs/mermaid-to-excalidraw.ts).
+ * - **Web Embed**: embeds a *live remote page* inside the canvas. SketchPilot is an offline,
+ *   local-first app with no host permissions; a canvas object that silently loads a third-party
+ *   site would break that promise, so the entry is gone and the manifest CSP now refuses frames
+ *   outright (`frame-src 'none'`), making it fail closed even if some future UI tried.
+ *
+ * Frame tool and Laser pointer stay: both are local, offline and part of the drawing surface.
+ */
+/* The menu renders in a portal outside the canvas host, so this selector is unscoped. */
+[data-testid="toolbar-embeddable"] {
+  display: none !important;
+}

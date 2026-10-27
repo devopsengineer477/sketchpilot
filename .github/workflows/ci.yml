@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      # `.npmrc` pins `legacy-peer-deps=true`: the canvas engine's peer range has not caught
+      # up with our React 18.3 pin (ADR-002). Keeping the flag in a committed file means a
+      # plain `npm ci` / `npm install` resolves the same way on every machine.
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Unit and component tests + coverage thresholds
+        run: npm run test:coverage
+
+      - name: Test matrix doc is in sync
+        run: npm test -- src/tests/test-matrix.test.ts
+
+      - name: Production build (also enforces the permission/manifest check)
+        run: npm run build
+
+      - name: End-to-end tests in the packaged build
+        run: |
+          npx playwright install --with-deps chromium
+          npx playwright test
+
+      - name: Upload the shippable extension
+        uses: actions/upload-artifact@v4
+        with:
+          name: sketchpilot-dist
+          path: dist
+          if-no-files-found: error
+
+      - name: Keep Playwright traces when something fails
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: |
+            test-results
+            playwright-report
+          retention-days: 7
