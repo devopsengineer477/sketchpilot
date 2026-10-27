@@ -7,10 +7,16 @@ import { fileURLToPath } from 'node:url';
 const root = dirname(fileURLToPath(import.meta.url));
 
 /**
- * Excalidraw resolves fonts/locales from `window.EXCALIDRAW_ASSET_PATH` and, if that
+ * Excalidraw resolves *fonts* from `window.EXCALIDRAW_ASSET_PATH` and, if that
  * fails, falls back to a public CDN. A CDN fallback is not acceptable in an MV3
  * extension (CSP violation, breaks offline mode, leaks a request to a third party),
- * so we ship the asset folder inside the extension and point the runtime at it.
+ * so we ship them inside the extension and point the runtime at them.
+ *
+ * They are copied into Vite's own `dist/assets/fonts/` (rather than a second,
+ * engine-specific folder at the package root) so the extension ships exactly one asset
+ * root: `dist/assets/` holds the hashed chunks *and* the fonts, and `EXCALIDRAW_ASSET_PATH`
+ * simply points at it. The copy runs in `closeBundle`, after Vite has written its output,
+ * and the font filenames are unhashed, so nothing can collide with a Vite-emitted asset.
  */
 /**
  * Font families we deliberately do not ship.
@@ -28,7 +34,7 @@ function copyExcalidrawAssets(): Plugin {
     name: 'sketchpilot:copy-excalidraw-assets',
     apply: 'build',
     closeBundle() {
-      const to = resolve(root, 'dist/excalidraw-assets');
+      const to = resolve(root, 'dist/assets');
       if (!existsSync(from)) throw new Error(`Excalidraw assets missing at ${from}`);
       mkdirSync(to, { recursive: true });
       // Copy family by family so a skipped family really is absent: `cpSync` merges into an
@@ -38,9 +44,11 @@ function copyExcalidrawAssets(): Plugin {
         if (!family.isDirectory() || SKIPPED_FONT_FAMILIES.has(family.name)) continue;
         cpSync(resolve(from, 'fonts', family.name), resolve(to, 'fonts', family.name), { recursive: true });
       }
-      if (existsSync(resolve(from, 'locales'))) {
-        cpSync(resolve(from, 'locales'), resolve(to, 'locales'), { recursive: true });
-      }
+      // Locales are deliberately NOT copied. The engine's `locales/*.json` are static imports, so
+      // Rollup emits them as lazy chunks in `assets/` (one per language, loaded on demand); nothing
+      // in the build ever fetches the package's own locale folder. Copying it shipped 1.7 MB
+      // of files no code path reads. It is removed here so a stale build cannot keep it around.
+      rmSync(resolve(to, 'locales'), { recursive: true, force: true });
     },
   };
 }

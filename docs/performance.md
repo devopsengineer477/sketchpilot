@@ -14,7 +14,7 @@ if a budget is exceeded. A regression therefore breaks CI, not just the docs.
 | Frame intervals | A `requestAnimationFrame` sampler runs in the page while the pointer pans a 200-element scene (40 pointer moves), then p95 and the count are reported. p95 is used because a single GC pause says nothing about steady state. |
 | Bundles | File sizes in `dist/assets`; popup and editor chunks are summed separately to prove the popup does not pull in the canvas engine. |
 
-## Results — v1.0.0 build, headless Chromium 141, 2 vCPU container, 2 GB RAM
+## Results — v1.1.2 build, headless Chromium 141, 2 vCPU container, 2 GB RAM
 
 ```
 Popup: navigation start → interactive                  90.3 ms   (budget 300 ms)   ✓
@@ -27,8 +27,7 @@ Editor: frames sampled                                 84
 Bundle: popup JS                                        4.9 KB  (budget 300 KB)   ✓
 Bundle: editor JS                                    1168.9 KB  (budget 6000 KB)  ✓
 Package: fonts (self-hosted)                            0.4 MB  (budget 3 MB)     ✓
-Package: locales                                        1.6 MB
-Package: dist total (unzipped)                          6.7 MB  (budget 10 MB)    ✓
+Package: dist total (unzipped)                          5.1 MB  (budget 10 MB)    ✓
 ```
 
 Run-to-run variation on this container is large and worth stating honestly: the *same* build
@@ -41,14 +40,18 @@ Reading the numbers honestly:
 
 - **16.7 ms p95 is a clean 60 fps.** The container is *slower* than a mid-range laptop, so
   these are conservative figures rather than optimistic ones.
+- **The package shrank from 6.7 MB to 5.1 MB in 1.1.2.** The engine asset folder used to
+  include the engine package's `locales/` folder (1.7 MB, 55 files) — files nothing ever fetched,
+  because the engine's locale JSON is statically imported and Rollup emits it as lazy chunks in
+  `assets/`. Only the self-hosted **fonts** need to be on disk; they now live in `assets/fonts/`
+  alongside the chunks, so the package has a single asset folder (0.4 MB).
 - **The popup is 4.9 KB of JavaScript.** It never imports the canvas engine; that is the
   code split P5-T11 asked for, and the budget test asserts it rather than trusting it.
 - **The editor chunk is ~1.2 MB** — that is Excalidraw plus our editor code, uncompressed.
   It is loaded once per editor tab and served from disk inside the extension, so there is
   no network component to the number.
-- **The package is 6.7 MB unzipped (2.7 MB zipped).** Fonts (0.4 MB) and the engine's locale
-  files (1.6 MB) are bundled rather than fetched, which is what makes the offline guarantee in
-  scenario 17 true. The package used to be 20 MB because Excalidraw's CJK handwriting face
+- **The package is 5.1 MB unzipped (2.2 MB zipped).** The fonts (0.4 MB) are bundled rather than
+  fetched, which is what makes the offline guarantee in scenario 17 true. The package used to be 20 MB because Excalidraw's CJK handwriting face
   (`Xiaolai`) ships as ~200 unicode-range subsets totalling 13 MB; it is excluded for 1.0
   (English-only release) and can be re-enabled with one line in `vite.config.ts` —
   see `SKIPPED_FONT_FAMILIES`.

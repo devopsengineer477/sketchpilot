@@ -29,7 +29,7 @@ check.
 **The extension loads but shows a blank page**
 Open DevTools on the tab and check the console. If you see a failed request to
 `esm.sh`, the asset path was not set: `src/editor/bootstrap.ts` must run before the
-engine mounts (`window.EXCALIDRAW_ASSET_PATH`), and `dist/excalidraw-assets/fonts`
+engine mounts (`window.EXCALIDRAW_ASSET_PATH`), and `dist/assets/fonts`
 must exist in the build.
 
 ## Extension

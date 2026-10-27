@@ -14,7 +14,7 @@ Checked against the built artefact, not the source tree.
 | Valid MV3 manifest | ✅ `manifest_version: 3`, module service worker |
 | `manifest.json` at the **root** of the ZIP | ✅ (confirmed by extracting the ZIP and loading it unpacked) |
 | No dev files in the package | ✅ no source maps, no `.ts`, no `node_modules`, no tests, no lockfile, no `.env` |
-| Size | ✅ 2.7 MB (limit is 2 GB) |
+| Size | ✅ 2.2 MB, 134 files (limit is 2 GB) |
 | Icons | ✅ 16/32/48/128 PNG, declared for both `action` and extension |
 | Name length ≤ 45 chars | ✅ "SketchPilot AI" (14) |
 | Short description ≤ 132 chars | ✅ 129 (there is a test for this) |

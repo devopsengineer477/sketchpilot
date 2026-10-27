@@ -1,6 +1,6 @@
 # Milestone 5 — Production readiness (v1.0.0)
 
-**Status:** complete. **Release artefact:** `release/sketchpilot-1.1.2.zip` (2.7 MB, 188 files).
+**Status:** complete. **Release artefact:** `release/sketchpilot-1.1.2.zip` (2.2 MB, 134 files).
 **Date:** 27 October 2026.
 
 Phase 5 was not about adding features — 0.4.0 already did what the specification asks for. It
@@ -117,8 +117,8 @@ Nothing in this report is an estimate. The end-to-end figure comes from a full
    dialog opens.
 5. **A non-hook named `useTemplate`**, two dead assignments in the capture path: found by the new
    lint pass, fixed rather than suppressed (one suppression is documented in place).
-6. **The package was 20 MB, 13 MB of it one unused CJK handwriting font.** Trimmed to 6.6 MB
-   (2.7 MB zipped); re-enabling it is one line in `vite.config.ts`.
+6. **The package was 20 MB, 13 MB of it one unused CJK handwriting font.** Trimmed to 5.1 MB
+   (2.2 MB zipped); re-enabling it is one line in `vite.config.ts`.
 7. **A fresh `npm install` failed with `ERESOLVE`** (reported from a real Windows clone): the
    lint toolchain I added pinned `@eslint/js@10`, whose peer is `eslint@10`, next to
    `eslint@9`. Both are now on 9.x, the repo ships `.npmrc` with `legacy-peer-deps=true` so a

@@ -33,7 +33,7 @@ for (const file of [
   'icons/icon-32.png',
   'icons/icon-48.png',
   'icons/icon-128.png',
-  'excalidraw-assets/fonts',
+  'assets/fonts',
   'THIRD-PARTY-NOTICES.txt',
   'LICENSE.txt',
 ]) {
@@ -161,10 +161,21 @@ for (const entry of ['popup', 'dashboard', 'settings']) {
 }
 
 // 5. Fonts must be shipped, not fetched.
-const fontDir = join(dist, 'excalidraw-assets/fonts');
+const fontDir = join(dist, 'assets/fonts');
 const families = existsSync(fontDir) ? readdirSync(fontDir) : [];
 if (families.length < 5) fail('Excalidraw font families were not copied into the build');
 else notes.push(`${families.length} bundled font families`);
+
+// The engine's locale JSON is bundled as lazy chunks in assets/; the package's copy of those files
+// is never fetched, so shipping it would add ~1.7 MB of dead weight to the ZIP.
+if (existsSync(join(dist, 'assets/locales'))) {
+  fail('assets/locales must not be shipped (the engine bundles locales as lazy chunks)');
+}
+
+// One asset root only: the fonts live with the chunks, and no engine-specific folder remains.
+if (existsSync(join(dist, 'excalidraw-assets'))) {
+  fail('dist/excalidraw-assets must not exist — engine fonts belong in dist/assets/fonts');
+}
 
 // 6. Popup must stay light: the canvas engine belongs to the editor entry only.
 const popupChunk = readdirSync(join(dist, 'assets')).find((file) => file.startsWith('popup-') && file.endsWith('.js'));

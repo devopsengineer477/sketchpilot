@@ -24,7 +24,7 @@ and `<Excalidraw>` mounted once in `EditorApp`.
 
 | Risk | Result |
 | --- | --- |
-| Fonts fetched from a CDN at runtime | **Real.** The engine resolves fonts from `window.EXCALIDRAW_ASSET_PATH` and falls back to `esm.sh` when unset — a CSP violation in MV3 and an offline failure. Mitigated: the build copies `dist/prod/fonts` into `dist/excalidraw-assets/` and `src/editor/bootstrap.ts` points the global there before anything renders. Verified: an end-to-end test asserts **zero** non-extension requests. |
+| Fonts fetched from a CDN at runtime | **Real.** The engine resolves fonts from `window.EXCALIDRAW_ASSET_PATH` and falls back to `esm.sh` when unset — a CSP violation in MV3 and an offline failure. Mitigated: the build copies the engine's fonts into `dist/assets/fonts/` and `src/editor/bootstrap.ts` points the global there before anything renders. Verified: an end-to-end test asserts **zero** non-extension requests. |
 | Vite `process.env` shims | Needed (`IS_PREACT`, `NODE_ENV`) and added to `vite.config.ts`. |
 | React 19 peer conflicts | Excalidraw 0.18 pins an older Radix Tabs. Chosen: React 18.3.1 (see ADR-002). |
 | `eval` / `new Function` in the bundle | One Emscripten "wasm glue" chunk from the engine's Mermaid path. Allow-listed with a written justification in `scripts/check-build.mjs`; everything else is asserted clean. |

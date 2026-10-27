@@ -21,6 +21,30 @@ an installable, loadable extension (no partial builds).
   console message and page error, waits for the throttled thumbnail render, and fails if anything
   logs "will be ignored".
 
+**Fixed (package size)**
+- `dist/excalidraw-assets/locales/` is gone. That folder was a copy of the engine package's 55
+  locale files (1.7 MB) — and nothing ever fetched it: the engine imports its locale JSON
+  statically, so Rollup already emits one lazy chunk per language in `assets/`, which is what the
+  editor actually loads. The ZIP dropped from **2.7 MB / 190 files to 2.2 MB / 134 files**
+  (unzipped: 7.1 MB → 5.1 MB) with no behavioural change.
+- `dist/excalidraw-assets/fonts/` **stays** — that one is genuinely read at runtime. The editor
+  resolves every text-family URL through `window.EXCALIDRAW_ASSET_PATH`; without the local fonts
+  the engine falls back to a CDN (a CSP violation and a privacy leak) and drawings would render in
+  the wrong typeface.
+- `scripts/check-build.mjs` now fails the build if `excalidraw-assets/locales` reappears, so the
+  dead weight cannot creep back in.
+
+**Changed (package layout)**
+- One asset folder instead of two. The engine fonts moved from `dist/excalidraw-assets/fonts/` to
+  `dist/assets/fonts/`, so `dist/` now holds a single asset root (`assets/` = hashed chunks +
+  fonts, plus `icons/`, the four HTML entry points and the licence files).
+  `window.EXCALIDRAW_ASSET_PATH` points at `assets/`; `src/editor/engine/assets.ts` is the only
+  place that knows the path. Verified in the packaged extension: the asset base resolves to
+  `/assets/`, both a Cascadia and an Excalifont `.woff2` return `200`, and drawn text renders in
+  the handwritten face (i.e. no CDN fallback, no silently-substituted system font).
+- `scripts/check-build.mjs` now fails the build if a `dist/excalidraw-assets` folder reappears, so
+  the layout cannot drift back.
+
 **Fixed (build, Windows)**
 - `npm run build` could stop with `Error: spawnSync npm ENOENT` while generating
   `THIRD-PARTY-NOTICES.txt`: `scripts/build-notices.mjs` called `execFileSync('npm', …)`, and on

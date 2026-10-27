@@ -263,17 +263,13 @@ test('budget: the shipped bundles stay code-split and small', async () => {
   // and are by far the largest thing we ship.
   const everything = walk(dist);
   const fonts = everything
-    .filter((asset) => /excalidraw-assets\/fonts\//.test(asset.name) && /\.(woff2?|ttf)$/i.test(asset.name))
-    .reduce((sum, asset) => sum + asset.kb, 0);
-  const locales = everything
-    .filter((asset) => /excalidraw-assets\/locales\//.test(asset.name))
+    .filter((asset) => /assets\/fonts\//.test(asset.name) && /\.(woff2?|ttf)$/i.test(asset.name))
     .reduce((sum, asset) => sum + asset.kb, 0);
   const total = everything.reduce((sum, asset) => sum + asset.kb, 0);
 
   record('Bundle: popup JS', popup, 'KB', BUDGETS.popupBundleKb);
   record('Bundle: editor JS', editor, 'KB', BUDGETS.editorBundleKb);
   record('Package: fonts (self-hosted)', fonts / 1024, 'MB', BUDGETS.fontAssetsMb);
-  record('Package: locales', locales / 1024, 'MB');
   record('Package: dist total (unzipped)', total / 1024, 'MB', BUDGETS.distTotalMb);
 
   // The popup must never pull the canvas engine in: that is the whole point of splitting.

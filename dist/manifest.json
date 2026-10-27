@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "SketchPilot AI",
-  "version": "1.0.1",
+  "version": "1.1.2",
   "description": "Sketch and diagram on a fast canvas. Capture pages and text, use templates or AI, and keep everything local, offline and private.",
   "minimum_chrome_version": "110",
   "action": {
@@ -65,6 +65,6 @@
     }
   },
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'none'"
+    "extension_pages": "script-src 'self'; object-src 'none'; frame-src 'none'; child-src 'none'; worker-src 'self'; base-uri 'self'"
   }
 }
