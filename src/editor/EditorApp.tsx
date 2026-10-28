@@ -32,6 +32,10 @@ import { useShortcuts, withMod, comboLabel } from '../hooks/useShortcuts';
 import { TEMPLATE_CATEGORIES, type TemplateCategory } from '../storage/schemas';
 import { Field, Select, TextArea, TextInput } from '../components/Field';
 import { AiPanel } from './AiPanel';
+import { PalettePanel } from './palette/PalettePanel';
+import { buildSymbol, newGroupId, symbolBounds } from './palette/build';
+import { findSymbol } from './palette/catalog';
+import { symbolTopLeftAt } from './palette/drop';
 import { specToSkeleton } from '../templates/instantiate';
 import { boundsOf, recentreSpec } from '../ai/layout';
 import type { AiDiagram, DiagramPlan } from '../ai/schemas';
@@ -58,6 +62,12 @@ import { readPreferences, writePreferences, openDashboard, readCommandBindings, 
 import type { ThemePreference } from '../storage/schemas';
 
 configureExcalidrawAssets();
+
+/** Remembered open/closed state for the Elements panel. */
+const PALETTE_PREFERENCE_KEY = 'sketchpilot.elementsPanel';
+/** Monochrome symbol ink, per theme: the same colours the engine uses for strokes. */
+const LIGHT_INK = '#1e1e1e';
+const DARK_INK = '#e9ecef';
 
 const EXCALIDRAW_UI_OPTIONS = {
   canvasActions: {
@@ -99,6 +109,17 @@ export function EditorApp({
   const [aiOpen, setAiOpen] = useState(
     () => new URLSearchParams(window.location.search).get('ai') === '1',
   );
+  // Closed by default: the canvas is the product. The choice is remembered per profile.
+  const [paletteOpen, setPaletteOpen] = useState(() => {
+    try {
+      return window.localStorage.getItem(PALETTE_PREFERENCE_KEY) === '1';
+    } catch {
+      return false;
+    }
+  });
+  const [lastInsertedSymbol, setLastInsertedSymbol] = useState<string | null>(null);
+  /** True while a symbol is being dragged out of the panel: the canvas shows a drop outline. */
+  const [paletteDragging, setPaletteDragging] = useState(false);
   const [aiPreview, setAiPreview] = useState<DiagramPlan | null>(null);
   const [aiRepairs, setAiRepairs] = useState<RepairAction[]>([]);
   const [pendingReplace, setPendingReplace] = useState<DiagramPlan | null>(null);
@@ -591,6 +612,89 @@ export function EditorApp({
     [push, resolvedTheme, session],
   );
 
+  /** Toggles the Elements panel and remembers the choice. */
+  const togglePalette = useCallback(() => {
+    setPaletteOpen((open) => {
+      const next = !open;
+      try {
+        window.localStorage.setItem(PALETTE_PREFERENCE_KEY, next ? '1' : '0');
+      } catch {
+        // A profile with storage disabled still gets a working panel, just no memory.
+      }
+      return next;
+    });
+  }, []);
+
+  /**
+   * Inserts a standard diagram symbol at the centre of the *canvas*, not the window: the Elements
+   * panel and the AI panel both take width off the canvas, and a symbol that lands under a panel
+   * looks like nothing happened.
+   */
+  const insertSymbol = useCallback(
+    (symbolId: string, options: { focusCanvas?: boolean; at?: { x: number; y: number } } = {}) => {
+      const api = apiRef.current;
+      if (!api) return;
+      const symbol = findSymbol(symbolId);
+      if (!symbol) return;
+
+      const appState = api.getAppState();
+      const zoomValue = appState.zoom.value || 1;
+      const host = canvasHostRef.current?.getBoundingClientRect();
+      const width = host?.width ?? window.innerWidth;
+      const height = host?.height ?? window.innerHeight - 48;
+      const bounds = symbolBounds(symbol);
+
+      // A dropped symbol lands centred on the pointer; a clicked one lands in the middle of the
+      // canvas (not the window, so a panel can never hide it).
+      const topLeft = options.at
+        ? symbolTopLeftAt(
+            options.at,
+            {
+              left: host?.left ?? 0,
+              top: host?.top ?? 0,
+              scrollX: appState.scrollX,
+              scrollY: appState.scrollY,
+              zoom: zoomValue,
+            },
+            bounds,
+          )
+        : {
+            x: -appState.scrollX + width / 2 / zoomValue - bounds.w / 2,
+            y: -appState.scrollY + height / 2 / zoomValue - bounds.h / 2,
+          };
+      const centerX = topLeft.x;
+      const centerY = topLeft.y;
+
+      const skeletons = buildSymbol(symbol, {
+        x: centerX,
+        y: centerY,
+        groupId: newGroupId(),
+        // Monochrome symbols take the theme's ink so they stay legible either way.
+        ink: resolvedTheme === 'dark' ? DARK_INK : LIGHT_INK,
+      });
+      const created = convertToExcalidrawElements(skeletons as never, { regenerateIds: false });
+
+      api.updateScene({
+        elements: [...api.getSceneElements(), ...created],
+        appState: {
+          selectedElementIds: Object.fromEntries(created.map((element) => [element.id, true])),
+        },
+        captureUpdate: CaptureUpdateAction.IMMEDIATELY,
+      });
+
+      // Hand keyboard control to the canvas so Delete, arrow-key nudging and dragging work on the
+      // symbol that was just added. Skipped for keyboard activation, where the user is walking the
+      // panel with Tab/arrows and stealing focus would drop them out of it.
+      if (options.focusCanvas) {
+        canvasHostRef.current?.querySelector<HTMLElement>('.excalidraw')?.focus({ preventScroll: true });
+      }
+
+      setLastInsertedSymbol(symbolId);
+      push('success', `${symbol.label} added`, 'Drag to move it. Everything in the group stays editable.');
+    },
+    [push, resolvedTheme],
+  );
+
   const insertStickyNote = useCallback(() => {
     const api = apiRef.current;
     const base = session.getBase();
@@ -650,13 +754,20 @@ export function EditorApp({
         onFire: () => void handleExport('png'),
       },
       {
+        // Shift + P: 'p' alone is unbound in the engine, and the modifier keeps it clear of it.
+        label: comboLabel('P', { shift: true }),
+        description: 'Elements panel',
+        match: (event: KeyboardEvent) => event.shiftKey && !withMod(event) && event.key.toLowerCase() === 'p',
+        onFire: togglePalette,
+      },
+      {
         label: '?',
         description: 'Keyboard shortcuts',
         match: (event: KeyboardEvent) => event.key === '?' || (event.shiftKey && event.key === '/'),
         onFire: () => setShortcutsOpen(true),
       },
     ],
-    [handleExport, session],
+    [handleExport, session, togglePalette],
   );
 
   useShortcuts(shortcuts);
@@ -729,6 +840,8 @@ export function EditorApp({
         onSaveAsTemplate={openTemplateDialog}
         onToggleAi={() => setAiOpen((open) => !open)}
         aiOpen={aiOpen}
+        onTogglePalette={togglePalette}
+        paletteOpen={paletteOpen}
         onOpenDashboard={() => openDashboard()}
         busy={exporting}
       />
@@ -758,7 +871,21 @@ export function EditorApp({
       ) : null}
 
       <div className="flex min-h-0 flex-1">
-        <main ref={canvasHostRef} className="excalidraw-host relative min-w-0 flex-1">
+        <PalettePanel
+          open={paletteOpen}
+          onClose={togglePalette}
+          onInsert={insertSymbol}
+          lastInserted={lastInsertedSymbol}
+          getCanvasRect={() => canvasHostRef.current?.getBoundingClientRect() ?? null}
+          onDragChange={setPaletteDragging}
+          zoom={zoom}
+        />
+        <main
+          ref={canvasHostRef}
+          className={`excalidraw-host relative min-w-0 flex-1 ${
+            paletteDragging ? 'palette-drop-target' : ''
+          }`}
+        >
         <ErrorBoundary fallbackTitle="The canvas hit an error">
           <Excalidraw
             key={session.document.id}

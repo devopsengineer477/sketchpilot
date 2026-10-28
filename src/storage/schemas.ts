@@ -7,7 +7,7 @@ import { z } from 'zod';
  */
 
 export const APP_NAME = 'SketchPilot AI';
-export const APP_VERSION = '1.1.2';
+export const APP_VERSION = '1.3.1';
 export const SCHEMA_VERSION = 2;
 
 /** Element ids are attacker-controllable via imported files, so bound them. */

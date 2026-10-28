@@ -107,3 +107,47 @@ html.popup-root #root {
 .dropdown-menu-container > div[style*="font-weight: 600"] {
   display: none !important;
 }
+
+/*
+ * Elements panel previews.
+ * The thumbnails are inline SVG drawn from the same geometry the insert uses, stroked with
+ * `currentColor` so they follow the theme without a second set of assets.
+ */
+.palette-card .palette-preview {
+  color: currentColor;
+  opacity: 0.9;
+}
+.palette-card:hover .palette-preview,
+.palette-card:focus-visible .palette-preview {
+  opacity: 1;
+}
+
+/*
+ * Elements panel: drag-to-place.
+ *
+ * While a symbol is being dragged out of the panel, the canvas is outlined so the drop target is
+ * obvious; the ghost itself is a portal at the pointer, drawn with `pointer-events: none` so it can
+ * never intercept the drop.
+ */
+.palette-drop-target::after {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  z-index: 40;
+  pointer-events: none;
+  border: 2px dashed #338ffb;
+  border-radius: 10px;
+  opacity: 0.75;
+}
+
+.palette-ghost {
+  opacity: 0.45;
+  color: #1e1e1e;
+  transition: opacity 90ms ease-out;
+}
+.dark .palette-ghost {
+  color: #e9ecef;
+}
+.palette-ghost.is-over {
+  opacity: 0.85;
+}

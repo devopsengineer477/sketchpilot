@@ -1,6 +1,6 @@
 # Chrome Web Store submission checklist
 
-Status of `release/sketchpilot-1.1.2.zip` against what the Web Store actually checks, and the
+Status of `release/sketchpilot-1.3.1.zip` against what the Web Store actually checks, and the
 short list of things only the account owner can do.
 
 ---
@@ -14,7 +14,7 @@ Checked against the built artefact, not the source tree.
 | Valid MV3 manifest | ✅ `manifest_version: 3`, module service worker |
 | `manifest.json` at the **root** of the ZIP | ✅ (confirmed by extracting the ZIP and loading it unpacked) |
 | No dev files in the package | ✅ no source maps, no `.ts`, no `node_modules`, no tests, no lockfile, no `.env` |
-| Size | ✅ 2.2 MB, 134 files (limit is 2 GB) |
+| Size | ✅ 2.3 MB, 133 files (limit is 2 GB) |
 | Icons | ✅ 16/32/48/128 PNG, declared for both `action` and extension |
 | Name length ≤ 45 chars | ✅ "SketchPilot AI" (14) |
 | Short description ≤ 132 chars | ✅ 129 (there is a test for this) |
@@ -92,7 +92,7 @@ These cannot be prepared from inside the repository.
 4. **Confirm the name** is free in the store and not trademarked.
 5. **Listing details** — category (Productivity), language, support/contact email, and the
    data-use questionnaire (answers are pre-written in `docs/store-listing.md`).
-6. **Upload** `release/sketchpilot-1.1.2.zip` in *Package → Upload new package*, fill the listing,
+6. **Upload** `release/sketchpilot-1.3.1.zip` in *Package → Upload new package*, fill the listing,
    paste the reviewer notes, submit.
 7. Expect **a few days** for a first review (longer if they ask about the AI/capture surface);
    updates are usually faster.

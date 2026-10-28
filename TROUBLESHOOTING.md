@@ -213,9 +213,9 @@ as a *large* jump — a doubled bundle, or an editor that takes seconds to becom
 check that both Playwright steps use the same browser install (`--with-deps chromium`).
 
 **I need the release ZIP.** Run `npm run build`, then zip the *contents* of `dist/`:
-`cd dist && zip -qr ../release/sketchpilot-1.1.2.zip .` (bash), `Compress-Archive -Path dist\*
--DestinationPath release\sketchpilot-1.1.2.zip -Force` (PowerShell), or
-`tar -a -c -f release\sketchpilot-1.1.2.zip -C dist *` (cmd). `manifest.json` must be at the ZIP
+`cd dist && zip -qr ../release/sketchpilot-1.3.1.zip .` (bash), `Compress-Archive -Path dist\*
+-DestinationPath release\sketchpilot-1.3.1.zip -Force` (PowerShell), or
+`tar -a -c -f release\sketchpilot-1.3.1.zip -C dist *` (cmd). `manifest.json` must be at the ZIP
 root.
 The version in `package.json`, `public/manifest.json` and `src/storage/schemas.ts` must agree, or
 the guard fails the build — that is deliberate, so a release can never be mislabelled.

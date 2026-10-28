@@ -280,3 +280,60 @@ test('capture core surface screenshots', async () => {
 
   await app.close();
 });
+
+/**
+ * The Elements panel, captured while it is being used: four standard symbols placed by dragging
+ * the freshly inserted group, so the screenshot shows the feature rather than a menu.
+ */
+test('capture standard-elements screenshots', async () => {
+  test.setTimeout(180_000);
+  const app = await launchExtension();
+  await app.page.setViewportSize({ width: 1280, height: 800 });
+  await app.page.goto(surfaceUrl(app.extensionId, 'dashboard'));
+  const { page } = await openNewDrawingFromDashboard(app.page, app.context);
+  page.setDefaultTimeout(15_000);
+
+  await page.getByRole('button', { name: 'Elements panel' }).click();
+  const panel = page.getByRole('complementary', { name: 'Elements' });
+  const box = await page.locator('.excalidraw canvas').first().boundingBox();
+  const cx = Math.round(box!.x + box!.width / 2);
+  const cy = Math.round(box!.y + box!.height / 2);
+
+  const place = async (id: string, dx: number, dy: number) => {
+    await panel.locator(`[data-symbol="${id}"]`).click();
+    await page.waitForTimeout(300);
+    await page.mouse.move(cx, cy);
+    await page.mouse.down();
+    await page.mouse.move(cx + dx / 2, cy + dy / 2, { steps: 6 });
+    await page.mouse.move(cx + dx, cy + dy, { steps: 6 });
+    await page.mouse.up();
+    await page.waitForTimeout(350);
+  };
+
+  await place('user', -260, -120);
+  await place('client-desktop', -40, -120);
+  await place('web-server', 180, -120);
+  await place('database', -40, 80);
+  await page.waitForTimeout(500);
+  await page.screenshot({ path: 'docs/screenshots/editor-elements.png' });
+
+  await page.getByRole('button', { name: /Switch to dark/i }).click();
+  await page.waitForTimeout(900);
+  await page.screenshot({ path: 'docs/screenshots/editor-elements-dark.png' });
+
+  // Drag-to-place, captured mid-flight: the ghost at the pointer and the canvas drop outline.
+  await page.getByRole('button', { name: /Switch to light/i }).click();
+  await page.waitForTimeout(700);
+  const card = await panel.locator('[data-symbol="queue"]').boundingBox();
+  const canvas = await page.locator('.excalidraw canvas').first().boundingBox();
+  await page.mouse.move(card!.x + card!.width / 2, card!.y + card!.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(card!.x + 60, card!.y + 20, { steps: 5 });
+  await page.mouse.move(canvas!.x + 420, canvas!.y + 470, { steps: 12 });
+  await page.waitForTimeout(250);
+  await page.screenshot({ path: 'docs/screenshots/editor-elements-drag.png' });
+  await page.mouse.up();
+  await page.waitForTimeout(300);
+
+  await app.close();
+});

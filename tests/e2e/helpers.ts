@@ -129,6 +129,35 @@ export async function drawRectangle(page: Page, offset = { x: 0, y: 0 }) {
   await page.waitForTimeout(300);
 }
 
+/**
+ * Screen position of the selection's bottom-right resize handle.
+ *
+ * The transformer handles are painted on the canvas, not DOM nodes, so they cannot be located with
+ * a selector. They are drawn in the engine's selection blue, so the handle is found by scanning a
+ * screenshot for the bottom-most, right-most strongly-blue pixel. Used by the resize regression
+ * test, which needs a real drag on a real handle.
+ */
+export async function findSelectionHandle(page: Page): Promise<{ x: number; y: number }> {
+  const { PNG } = await import('pngjs');
+  const png = PNG.sync.read(await page.screenshot());
+  let best = { x: 0, y: 0 };
+  let bestScore = -Infinity;
+  for (let y = 0; y < png.height; y += 1) {
+    for (let x = 0; x < png.width; x += 1) {
+      const index = (png.width * y + x) << 2;
+      const r = png.data[index]!;
+      const g = png.data[index + 1]!;
+      const b = png.data[index + 2]!;
+      const isSelectionBlue = b > 150 && b - r > 40 && b - g > 40 && r < 150;
+      if (isSelectionBlue && x + y > bestScore) {
+        bestScore = x + y;
+        best = { x, y };
+      }
+    }
+  }
+  return best;
+}
+
 export async function waitForSaved(page: Page) {
   await page.getByText(/Saved/).first().waitFor({ timeout: 15_000 });
 }

@@ -1,6 +1,6 @@
 # Milestone 5 — Production readiness (v1.0.0)
 
-**Status:** complete. **Release artefact:** `release/sketchpilot-1.1.2.zip` (2.2 MB, 134 files).
+**Status:** complete. **Release artefact:** `release/sketchpilot-1.3.1.zip` (2.3 MB, 133 files).
 **Date:** 27 October 2026.
 
 Phase 5 was not about adding features — 0.4.0 already did what the specification asks for. It
@@ -14,7 +14,7 @@ and the whole thing packaged for the Web Store with documentation that matches t
 | --- | --- |
 | Lint (ESLint 9, new flat config) | clean — 0 errors, 0 warnings |
 | Type check (`tsc --noEmit`, strict) | clean |
-| Unit + component tests | **208 passed / 17 files** |
+| Unit + component tests | **236 passed / 18 files** |
 | Coverage (`src/storage`, `src/ai`, `src/export`) | **84.8 % / 90.0 % / 81.2 %** statements (thresholds 80 % enforced) |
 | Production build + release guard | `✔ build checks passed` |
 | End-to-end (packaged `dist/` in real Chromium) | **53 passed**, ~3.8 min |
@@ -118,7 +118,7 @@ Nothing in this report is an estimate. The end-to-end figure comes from a full
 5. **A non-hook named `useTemplate`**, two dead assignments in the capture path: found by the new
    lint pass, fixed rather than suppressed (one suppression is documented in place).
 6. **The package was 20 MB, 13 MB of it one unused CJK handwriting font.** Trimmed to 5.1 MB
-   (2.2 MB zipped); re-enabling it is one line in `vite.config.ts`.
+   (2.3 MB zipped); re-enabling it is one line in `vite.config.ts`.
 7. **A fresh `npm install` failed with `ERESOLVE`** (reported from a real Windows clone): the
    lint toolchain I added pinned `@eslint/js@10`, whose peer is `eslint@10`, next to
    `eslint@9`. Both are now on 9.x, the repo ships `.npmrc` with `legacy-peer-deps=true` so a
@@ -144,7 +144,7 @@ Nothing in this report is an estimate. The end-to-end figure comes from a full
 ## Exit gate
 
 - [x] All 18 §14 scenarios automated and green; CI configured from a clean clone
-      (verified: `rm -rf node_modules && npm ci` then 208 unit tests + 55 e2e green).
+      (verified: `rm -rf node_modules && npm ci` then 236 unit tests + 69 e2e green).
 - [x] Accessibility and keyboard pass complete with fixes applied.
 - [x] Performance budgets met with numbers recorded.
 - [x] Security checklist signed off; permissions minimal and documented.

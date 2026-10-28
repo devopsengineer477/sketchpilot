@@ -25,6 +25,13 @@ This is a working editor, not a mockup. What is *not* here yet is listed honestl
 - Infinite canvas with pan, zoom (in/out/reset/fit-to-content) and a shortcut hint bar.
 - Shapes, arrows, lines, freehand, text, images, and a one-click **sticky note**
   (rounded, filled rectangle with a bound, editable label).
+- **Elements panel** (top bar or `Shift + P`): 16 standard system-diagram symbols — user, client,
+  mobile, web server, worker, database, cache, object storage, queue, message broker, load
+  balancer, API gateway, cloud, CDN/edge, firewall, external API — searchable by `db`, `sql`,
+  `kafka`, `s3`, `waf`… **Click** to drop one in the middle of the canvas or **drag** it exactly
+  where you want it. Each insert is *native, editable* grouped geometry with a label, so symbols
+  recolour, resize, ungroup, save and export like anything drawn by hand. Monochrome, no fonts, no
+  images, no network. See [`docs/feature-standard-elements.md`](docs/feature-standard-elements.md).
 - Selection, move, resize, rotate, duplicate, delete; multi-select; grouping;
   snapping and alignment guides; frames.
 - Full property editing via the engine's inspector: stroke/fill, stroke width and
@@ -171,17 +178,17 @@ Build a store/release ZIP (pick the one for your shell):
 
 ```bash
 # bash / zsh
-cd dist && zip -qr ../release/sketchpilot-1.1.2.zip . && cd ..
+cd dist && zip -qr ../release/sketchpilot-1.3.1.zip . && cd ..
 ```
 
 ```powershell
 # PowerShell
-Compress-Archive -Path dist\* -DestinationPath release\sketchpilot-1.1.2.zip -Force
+Compress-Archive -Path dist\* -DestinationPath release\sketchpilot-1.3.1.zip -Force
 ```
 
 ```bat
 :: cmd.exe (Windows 10+ ships tar)
-tar -a -c -f release\sketchpilot-1.1.2.zip -C dist *
+tar -a -c -f release\sketchpilot-1.3.1.zip -C dist *
 ```
 
 Or simply right-click `dist/` → *Send to* → *Compressed (zipped) folder*, then rename it:
@@ -384,6 +391,7 @@ do, in full:
 | [`CHANGELOG.md`](CHANGELOG.md) | What changed in each release. |
 | [`LICENSE`](LICENSE) · [`THIRD-PARTY-NOTICES.txt`](public/THIRD-PARTY-NOTICES.txt) | Our own MIT licence, and the notices of the open-source components we ship. |
 | [`docs/test-matrix.md`](docs/test-matrix.md) | §14's eighteen scenarios, each mapped to the named test covering it. |
+| [`docs/feature-standard-elements.md`](docs/feature-standard-elements.md) | The Elements panel: what ships, how it behaves, and how to add a symbol. |
 | [`docs/performance.md`](docs/performance.md) | The performance budgets and the measured numbers behind them. |
 | [`docs/security-review.md`](docs/security-review.md) | Security checklist, threat model, store-facing permission justifications. |
 | [`docs/branding-and-licensing.md`](docs/branding-and-licensing.md) | What was removed for branding, what was kept for licensing, and how each is enforced. |

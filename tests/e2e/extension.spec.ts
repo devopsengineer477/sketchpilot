@@ -148,6 +148,9 @@ test('8b. SVG export produces sanitised vector output', async () => {
   expect(svg).toContain('<svg');
   expect(svg).not.toMatch(/<script/i);
   expect(svg).not.toMatch(/javascript:/i);
+  // An export is a user-facing artefact: it must not carry another product's name.
+  expect(svg).not.toMatch(/excalidraw/i);
+  expect(svg).not.toMatch(/<!--/);
 });
 
 test('8c. JSON export is a valid, re-importable document', async () => {

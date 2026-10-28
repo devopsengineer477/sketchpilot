@@ -10,6 +10,7 @@ import {
   Redo2,
   Scan,
   BookmarkPlus,
+  Shapes,
   Sparkles,
   StickyNote,
   Sun,
@@ -39,6 +40,8 @@ type Props = {
   onSaveAsTemplate: () => void;
   onToggleAi: () => void;
   aiOpen: boolean;
+  onTogglePalette: () => void;
+  paletteOpen: boolean;
   onOpenDashboard: () => void;
   busy?: boolean;
 };
@@ -58,6 +61,8 @@ export function TopBar({
   onSaveAsTemplate,
   onToggleAi,
   aiOpen,
+  onTogglePalette,
+  paletteOpen,
   onOpenDashboard,
   busy = false,
 }: Props) {
@@ -165,6 +170,22 @@ export function TopBar({
         <IconButton label="Save selection as template" onClick={onSaveAsTemplate}>
           <BookmarkPlus size={16} aria-hidden />
         </IconButton>
+
+        <button
+          type="button"
+          onClick={onTogglePalette}
+          aria-pressed={paletteOpen}
+          title="Elements (Shift + P)"
+          aria-label="Elements panel"
+          className={`inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium transition-colors ${
+            paletteOpen
+              ? 'bg-pilot-100 text-pilot-800 dark:bg-pilot-900/50 dark:text-pilot-200'
+              : 'text-ink-700 hover:bg-ink-100 dark:text-ink-200 dark:hover:bg-ink-800'
+          }`}
+        >
+          <Shapes size={15} aria-hidden />
+          <span className="hidden md:inline">Elements</span>
+        </button>
 
         <button
           type="button"

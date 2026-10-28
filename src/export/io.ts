@@ -145,13 +145,19 @@ export async function readFileAsText(file: File): Promise<Result<string>> {
 
 /** Strips script-capable constructs from an SVG string before it leaves (or enters) the app. */
 export function sanitizeSvg(svg: string): string {
-  return svg
-    .replace(/<script[\s\S]*?<\/script>/gi, '')
-    .replace(/<foreignObject[\s\S]*?<\/foreignObject>/gi, '')
-    .replace(/\son[a-z]+\s*=\s*"[^"]*"/gi, '')
-    .replace(/\son[a-z]+\s*=\s*'[^']*'/gi, '')
-    .replace(/\s(href|xlink:href)\s*=\s*"javascript:[^"]*"/gi, '')
-    .replace(/\s(href|xlink:href)\s*=\s*"data:text\/html[^"]*"/gi, '');
+  return (
+    svg
+      .replace(/<script[\s\S]*?<\/script>/gi, '')
+      .replace(/<foreignObject[\s\S]*?<\/foreignObject>/gi, '')
+      .replace(/\son[a-z]+\s*=\s*"[^"]*"/gi, '')
+      .replace(/\son[a-z]+\s*=\s*'[^']*'/gi, '')
+      .replace(/\s(href|xlink:href)\s*=\s*"javascript:[^"]*"/gi, '')
+      .replace(/\s(href|xlink:href)\s*=\s*"data:text\/html[^"]*"/gi, '')
+      // The engine stamps `<!-- svg-source:excalidraw -->` into every SVG. An export is a
+      // user-facing artefact that travels into documents, slides and issue trackers, so it must
+      // not carry another product's name. Comments carry no rendering information: drop them all.
+      .replace(/<!--[\s\S]*?-->/g, '')
+  );
 }
 
 export function downloadBlob(blob: Blob, fileName: string): void {

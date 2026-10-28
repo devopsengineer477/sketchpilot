@@ -126,6 +126,14 @@ describe('svg sanitisation', () => {
     expect(clean).not.toMatch(/foreignObject/i);
     expect(clean).toContain('<rect');
   });
+
+  it('drops the engine provenance comment from the exported file', () => {
+    const stamped = `<svg xmlns="http://www.w3.org/2000/svg"><!-- svg-source:excalidraw --><rect width="10" height="10"/></svg>`;
+    const clean = sanitizeSvg(stamped);
+    expect(clean).not.toMatch(/excalidraw/i);
+    expect(clean).not.toMatch(/<!--/);
+    expect(clean).toContain('<rect');
+  });
 });
 
 describe('file naming', () => {

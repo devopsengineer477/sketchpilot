@@ -25,7 +25,7 @@ Editor: 200-element scene → interactive               296.9 ms   (budget 1500 
 Editor: p95 frame interval while panning (200 els)     16.7 ms   (budget 50 ms)     ✓
 Editor: frames sampled                                 84
 Bundle: popup JS                                        4.9 KB  (budget 300 KB)   ✓
-Bundle: editor JS                                    1168.9 KB  (budget 6000 KB)  ✓
+Bundle: editor JS                                    1182.4 KB  (budget 6000 KB)  ✓
 Package: fonts (self-hosted)                            0.4 MB  (budget 3 MB)     ✓
 Package: dist total (unzipped)                          5.1 MB  (budget 10 MB)    ✓
 ```
@@ -47,10 +47,10 @@ Reading the numbers honestly:
   alongside the chunks, so the package has a single asset folder (0.4 MB).
 - **The popup is 4.9 KB of JavaScript.** It never imports the canvas engine; that is the
   code split P5-T11 asked for, and the budget test asserts it rather than trusting it.
-- **The editor chunk is ~1.2 MB** — that is Excalidraw plus our editor code, uncompressed.
+- **The editor chunk is ~1.18 MB** — that is Excalidraw plus our editor code, uncompressed.
   It is loaded once per editor tab and served from disk inside the extension, so there is
   no network component to the number.
-- **The package is 5.1 MB unzipped (2.2 MB zipped).** The fonts (0.4 MB) are bundled rather than
+- **The package is 5.1 MB unzipped (2.3 MB zipped).** The fonts (0.4 MB) are bundled rather than
   fetched, which is what makes the offline guarantee in scenario 17 true. The package used to be 20 MB because Excalidraw's CJK handwriting face
   (`Xiaolai`) ships as ~200 unicode-range subsets totalling 13 MB; it is excluded for 1.0
   (English-only release) and can be re-enabled with one line in `vite.config.ts` —

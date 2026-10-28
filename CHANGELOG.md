@@ -3,6 +3,75 @@
 All notable changes to SketchPilot AI. Versions follow semantic versioning; every release is
 an installable, loadable extension (no partial builds).
 
+## 1.3.1 — resizing a symbol keeps its shape
+
+**Fixed**
+- **Resizing an inserted element destroyed it.** Dragging a corner handle flattened the database
+  cylinder into a bar, straightened the user's shoulders and the cloud's bumps. Cause: every
+  polyline was created with the engine's default `width`/`height` of **0**, even though its points
+  spanned dozens of units. Drawing looked fine, but the engine resizes a line by scaling its points
+  against that box — with a zero-height box the vertical scale collapsed and every arc became a
+  straight line. Polylines now carry their real bounding box, so a resize scales the shape
+  proportionally.
+- The same defect also distorted the multi-stroke symbols on any resize: `firewall`, `queue`,
+  `web-server`, `worker`, `client-desktop` and `broker` all had zero-sized lines.
+- Regression coverage: a unit test asserts every polyline's `width`/`height` matches the extent of
+  its points, and a new end-to-end test *13* drags a real resize handle and checks that all parts
+  of the symbol grow by the same factor (and that the cylinder's body keeps a non-zero height).
+
+**Unchanged** — no visual change at insert time, no schema change, no new dependency in the
+package (the resize test uses `pngjs`, a dev-only dependency, to locate the canvas-painted handle).
+
+## 1.3.0 — drag elements onto the canvas
+
+**Added**
+- **Drag-to-place.** Pick a symbol up in the Elements panel and drop it exactly where you want it.
+  While a symbol is in flight a translucent ghost follows the pointer and the canvas is outlined as
+  the drop target; releasing outside the canvas inserts nothing.
+- The press is only a drag after a few pixels of travel, so a shaky click still behaves as a click
+  (and inserts at the canvas centre, as before). <kbd>Esc</kbd> cancels a drag in progress.
+- Dropping centres the symbol on the pointer in **scene** coordinates, so it lands where it looks
+  even when the canvas is zoomed or scrolled.
+- Implemented with pointer events bound only while a press is in flight — no HTML5 drag-and-drop —
+  so it cannot interfere with the engine's own dragging or its file-drop handling.
+
+**Unchanged** — click-to-insert, keyboard operation, the storage schema, permissions and the
+monochrome look. Drag adds no dependency and no network access.
+
+## 1.2.0 — standard diagram elements
+
+**Added**
+- **Elements panel** — a library of 16 standard system-diagram symbols on the left of the canvas:
+  User, Client, Mobile, Web server, Worker, Database, Cache, Object storage, Queue, Message broker,
+  Load balancer, API gateway, Cloud, CDN / Edge, Firewall and External API. Searchable by what
+  people actually type (`db`, `sql`, `postgres`, `kafka`, `s3`, `waf`…), grouped by role
+  (People · Compute · Data · Network).
+- Every symbol is inserted as **native, editable engine elements**: rectangles, ellipses,
+  polylines and a text label sharing one group id. That means one click gives you a real database
+  cylinder you can recolour, resize, retype or ungroup — not an image, not a locked template, not
+  a third-party plugin. It saves, exports and re-opens through the code paths that already existed,
+  so storage needed no schema change.
+- Symbols are **monochrome**: no fills, ink strokes that follow the theme (dark ink on light, light
+  ink on dark), so a diagram reads cleanly and prints.
+- Panel is **closed by default** (the canvas is the product) and opens from the *Elements* button in
+  the top bar or **Shift + P**; the choice is remembered. It is fully keyboard operable: opening
+  focuses the search box, Tab reaches the cards, arrows walk them, Enter inserts, Escape closes.
+- Clicking a symbol inserts it in the middle of the *canvas* (not the window, so panels cannot hide
+  it), selects it, and hands keyboard focus to the canvas so Delete, arrow-nudging and dragging work
+  immediately.
+
+**Fixed**
+- Polylines were inserted with their first point off the origin, so a symbol's line parts (the
+  user's shoulders, the client's stand, the database body) slid out of position the moment the
+  group was dragged. Recipes are now normalised to the engine's convention (`points[0] === [0,0]`,
+  offset folded into the element's `x`/`y`).
+- `Worker` read as a donut and `Cloud` had no base line; both were redrawn. `Message broker` now
+  carries two opposing arrows so it cannot be confused with `External API`.
+
+**Unchanged** — no new dependency, no network request, no new file type, no third-party name: the
+shapes are numbers in `src/editor/palette/catalog.ts`. Storage schema, export formats and
+permissions are untouched.
+
 ## 1.1.2 — a warning-free console
 
 **Fixed**
@@ -33,6 +102,15 @@ an installable, loadable extension (no partial builds).
   the wrong typeface.
 - `scripts/check-build.mjs` now fails the build if `excalidraw-assets/locales` reappears, so the
   dead weight cannot creep back in.
+
+**Fixed (exported files)**
+- **Every exported SVG began with `<!-- svg-source:excalidraw -->`.** The engine stamps that
+  provenance comment into the file, and an export is a *user-facing artefact* — it travels into
+  documents, slide decks, issue trackers and other tools, so it was the one place another
+  product's name still appeared. `sanitizeSvg` now strips all XML comments (they carry no
+  rendering information), and the end-to-end SVG export test asserts the file contains neither
+  the name nor a comment. JSON (our own envelope: `"type": "sketchpilot"`) and PNG (no embedded
+  scene metadata) were already clean — verified by inspecting the real downloads.
 
 **Changed (package layout)**
 - One asset folder instead of two. The engine fonts moved from `dist/excalidraw-assets/fonts/` to
